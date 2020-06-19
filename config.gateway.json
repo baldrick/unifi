@@ -1,0 +1,9 @@
+{
+    "system": {
+        "static-host-mapping": {
+            "host-name": {
+                "<yourhostname>": { "alias": [ "<youralias>" ], "inet": [ "<IP address you want to assign>" ] }
+            }
+        }
+    }
+}
