@@ -1,5 +1,7 @@
 # Unifi
 
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/baldrick/unifi)
+
 ## The Scripts
 
 Manage Unifi kit from the command line...
@@ -11,4 +13,3 @@ Manage Unifi kit from the command line...
 
 ## Dependencies
 [jq](https://stedolan.github.io/jq/) to parse responses
-
