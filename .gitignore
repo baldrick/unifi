@@ -1,0 +1,8 @@
+__pycache__
+contacts-sync
+.unifi
+cookie.txt
+credentials.json
+token.json
+*.csv
+.pwd
