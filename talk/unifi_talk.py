@@ -1,7 +1,7 @@
 import requests
 import urllib3
-from contact import Contact
-from google_contacts import GoogleContacts
+from talk.contact import Contact
+from google_contacts.google_contacts import GoogleContacts
 
 # CSV header for import to Unifi Talk.
 HEADER = 'first_name,last_name,company,job_title,email,mobile_number,home_number,work_number,fax_number,other_number'
