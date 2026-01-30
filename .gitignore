@@ -1,8 +1,6 @@
-__pycache__
 contacts-sync
+__pycache__
 .unifi
-cookie.txt
-credentials.json
-token.json
-*.csv
+.google
 .pwd
+*.csv

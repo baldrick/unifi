@@ -9,32 +9,34 @@ from googleapiclient.discovery import build
 logger = logging.getLogger(__name__)
 
 class GoogleContacts:
-    # If modifying these scopes, delete the token.json file.
+    # If modifying these scopes, delete the token file.
     SCOPES = ['https://www.googleapis.com/auth/contacts.readonly']
+    TOKEN_FILE = '.google/token.json'
+    CLIENT_SECRETS_FILE = '.google/credentials.json'
 
     def __init__(self):
         self.raw_contacts = GoogleContacts.fetch()
 
     def fetch():
         creds = None
-        # token.json stores the user's access and refresh tokens
-        if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json', GoogleContacts.SCOPES)
+        # The token file stores the user's access and refresh tokens.
+        if os.path.exists(GoogleContacts.TOKEN_FILE):
+            creds = Credentials.from_authorized_user_file(GoogleContacts.TOKEN_FILE, GoogleContacts.SCOPES)
         
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file('credentials.json', GoogleContacts.SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(GoogleContacts.CLIENT_SECRETS_FILE, GoogleContacts.SCOPES)
                 creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open('token.json', 'w') as token:
+            # Save the credentials for the next run.
+            with open(GoogleContacts.TOKEN_FILE, 'w') as token:
                 token.write(creds.to_json())
 
         service = build('people', 'v1', credentials=creds)
 
-        # Call the People API to list connections
+        # Call the People API to list connections.
         results = service.people().connections().list(
             resourceName='people/me',
             pageSize=1000,
