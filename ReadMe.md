@@ -2,27 +2,30 @@
 
 Python-based CLI to interact with Unifi kit.
 
-So far just used to sync Google contacts with Unifi Talk.
+Important: as it stands the interactions with any Unifi controller are insecure.  If you're the subject of a man-in-the-middle attack, that's on you.
 
-Reverse-engineered so will break if Unifi change their API (it's not documented).
+So far just used to sync Google contacts with Unifi Talk.  You need to set up your own Google project with access to the people API if you want to do this.
+
+Calls to Unifi Talk are reverse-engineered so may break if Unifi change their API (it's not documented).
 
 There's a hierarchy of commands to simplify adding network / protect at some point.  `talk` is the only top level command at the moment.
 
+All commands expect these flags:
+
+* `--server` is the endpoint of your Unifi controller
+* `--username` is the name of the user to log in to the controller
+* `--password` is, well, duh, the password of the user
+
+To run the CLI you'll first need to:
+
+* create a new python environment, e.g. `python -m venv yourenv`
+* activate that environment with `source yourenv/bin/activate`
+* `pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib`
+* (optional) Switch interpreter to the env-specific one if you're going to edit in VS-Code
+  *  I assume there are similar switches with other IDEs, you'll need to figure that out yourself.
+* Run `deactivate` when you're done & want to leave the environment.
+
 ## Talk
-
-Create a python environment and `pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib`.
-
-To use the CLI:
-
-```shell
-$ <my-env>/bin/python unifi.py --server https://your.unifi --username you --password yourpwd talk get contacts
-
-# outputs raw contact info
-
-$ myenv/bin/python unifi.py --server https://your.unifi --username you --password yourpwd talk get lists
-
-# outputs raw contact lists
-```
 
 `talk` supports the following command structure:
 
@@ -31,6 +34,16 @@ $ myenv/bin/python unifi.py --server https://your.unifi --username you --passwor
   * lists - get contact lists
 * sync - synchronize Google contacts with Unifi Talk; deletes all existing Unifi Talk contacts!
   * takes a list of `labels` - these correspond to labels in Google contacts.  Be careful of importing labels where one contact appears in both, de-duplication at that level is not handled.
+
+For example:
+
+```shell
+$ python unifi.py --server https://your.unifi --username you --password yourpwd talk get contacts
+# outputs raw contact info
+
+$ python unifi.py --server https://your.unifi --username you --password yourpwd talk get lists
+# outputs raw contact lists
+```
 
 ### Caveats
 
