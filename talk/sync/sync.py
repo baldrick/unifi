@@ -1,6 +1,6 @@
 from google_contacts.google_contacts import GoogleContacts
 from talk.contact import Contact
-from talk.talk import TalkAPI
+from talk.api import TalkAPI
 
 # CSV header for import to Unifi Talk.
 HEADER = 'first_name,last_name,company,job_title,email,mobile_number,home_number,work_number,fax_number,other_number'
