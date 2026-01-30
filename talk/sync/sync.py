@@ -1,6 +1,6 @@
 from google_contacts.google_contacts import GoogleContacts
 from talk.contact import Contact
-from talk.talk import Talk
+from talk.talk import TalkAPI
 
 # CSV header for import to Unifi Talk.
 HEADER = 'first_name,last_name,company,job_title,email,mobile_number,home_number,work_number,fax_number,other_number'
@@ -13,7 +13,7 @@ def add_commands(subparsers):
 
 
 def sync_contacts(args):
-    talk = Talk(args.server, args.username, args.password)
+    talk = TalkAPI(args.server, args.username, args.password)
     raw_contacts = GoogleContacts()
     filtered_contacts = {}
     for label in args.labels:

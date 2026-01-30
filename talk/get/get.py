@@ -1,4 +1,4 @@
-from talk.talk import Talk
+from talk.talk import TalkAPI
 
 def add_commands(subparsers):
     get_parser = subparsers.add_parser('get', help='get contacts from Unifi Talk')
@@ -10,12 +10,12 @@ def add_commands(subparsers):
 
 
 def get_contacts(args):
-    talk = Talk(args.server, args.username, args.password)
+    talk = TalkAPI(args.server, args.username, args.password)
     contacts = talk.get_contacts()
     print(contacts)
 
 
 def get_contact_lists(args):
-    talk = Talk(args.server, args.username, args.password)
+    talk = TalkAPI(args.server, args.username, args.password)
     contact_lists = talk.get_contact_lists()
     print(contact_lists)

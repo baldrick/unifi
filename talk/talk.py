@@ -2,7 +2,7 @@ import requests
 import urllib3
 from talk.contact import Contact
 
-class Talk:
+class TalkAPI:
     def __init__(self, base_url: str, username: str, password: str):
         self.base_url = base_url
         self.username = username
