@@ -1,6 +1,6 @@
 # Unifi CLI
 
-Python-based CLI to interact with Unifi kit.
+Python-based CLI to interact with Unifi kit.  If you've got constructive criticism about my Python code please let me know - I haven't written a lot of it ;-)
 
 Important: as it stands the interactions with any Unifi controller are insecure.  If you're the subject of a man-in-the-middle attack, that's on you.
 

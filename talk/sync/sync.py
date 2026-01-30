@@ -13,29 +13,30 @@ def add_commands(subparsers):
 
 
 def sync_contacts(args):
-    talk = TalkAPI(args.server, args.username, args.password)
+    api = TalkAPI(args.server, args.username, args.password)
     raw_contacts = GoogleContacts()
     filtered_contacts = {}
     for label in args.labels:
         filtered_contacts[label] = raw_contacts.filter(label)
-        write_contacts(filtered_contacts[label], label)
+        write_csv(filtered_contacts[label], label)
 
-    deleted = talk.delete_all_contacts()
+    deleted = api.delete_all_contacts()
     if deleted:
         print('Deleted all contacts from Unifi Talk')
+        # TODO ... why doesn't this work?!
         # tcls = talk.get_contact_lists()
-        talk.save_contacts(args.labels[0], [filtered_contacts[args.labels[0]][0]])
+        api.save_contacts(args.labels[0], [filtered_contacts[args.labels[0]][0]])
     else:
         print('Failed to delete contacts from Unifi Talk: {deleted}')
 
 
-def write_contacts(contacts, group_id):
+def write_csv(contacts, group_id):
     print(f'{len(contacts)} {group_id} contacts found')
     deduped_by_home_number, contacts_without_home_number = dedup_by_home_number(contacts)
     deduped_by_home_number = add_cohabitants(deduped_by_home_number)
     with open(f'{group_id}.csv', 'w') as f:
         f.write(HEADER + '\n')
-        f.write(dump(deduped_by_home_number, contacts_without_home_number))
+        f.write(contacts_as_csv(deduped_by_home_number, contacts_without_home_number))
 
 
 def dedup_by_home_number(contacts):
@@ -79,7 +80,7 @@ def add_cohabitants(deduped_by_home_number):
     return deduped_by_home_number
 
 
-def dump(deduped_by_home_number, contacts_without_home_number) -> str:
+def contacts_as_csv(deduped_by_home_number, contacts_without_home_number) -> str:
     output = ''
     for hn, contacts in deduped_by_home_number.items():
         if contacts is None:

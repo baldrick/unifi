@@ -10,12 +10,12 @@ def add_commands(subparsers):
 
 
 def get_contacts(args):
-    talk = TalkAPI(args.server, args.username, args.password)
-    contacts = talk.get_contacts()
+    api = TalkAPI(args.server, args.username, args.password)
+    contacts = api.get_contacts()
     print(contacts)
 
 
 def get_contact_lists(args):
-    talk = TalkAPI(args.server, args.username, args.password)
-    contact_lists = talk.get_contact_lists()
+    api = TalkAPI(args.server, args.username, args.password)
+    contact_lists = api.get_contact_lists()
     print(contact_lists)
