@@ -1,9 +1,12 @@
+import logging
 import os
 from talk.contact import Contact
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+
+logger = logging.getLogger(__name__)
 
 class GoogleContacts:
     # If modifying these scopes, delete the token.json file.
@@ -97,6 +100,6 @@ class GoogleContacts:
                     email = address.get('value', '')
                     break
         if len(email_addresses) > 1 and email == '':
-            print(f"Warning: {len(email_addresses)} email addresses for {first_name} {last_name}", flush=True)
+            logger.warning(f'{len(email_addresses)} email addresses for {first_name} {last_name}')
 
         return Contact(first_name, last_name, email, mobile_number, home_number, work_number)

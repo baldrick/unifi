@@ -1,6 +1,10 @@
+import json
+import logging
 import requests
 import urllib3
 from talk.contact import Contact
+
+logger = logging.getLogger(__name__)
 
 class TalkAPI:
     def __init__(self, base_url: str, username: str, password: str):
@@ -13,10 +17,10 @@ class TalkAPI:
 
     def login(self):
         if self.username is None:
-            print('Error: username not set')
+            logger.error('username not set')
             return False
         if self.password is None:
-            print('Error: password not set')
+            logger.error('password not set')
             return False
         if self.session is not None:
             return True
@@ -28,11 +32,11 @@ class TalkAPI:
         }
         response = self.session.post(url, json=payload, verify=False)
         if response.status_code != 200:
-            print(f'Error logging in: {response.status_code} {response.text}')
+            logger.error(f'logging in: {response.status_code} {response.text}')
             return False
         else:
             self.xcsrf_token = response.headers.get('X-Csrf-Token')
-            print(f'Logged in to Unifi')
+            logger.debug(f'logged in to Unifi')
             return True
 
 
@@ -42,7 +46,7 @@ class TalkAPI:
         url = f'{self.base_url}{path}'
         response = self.session.get(url, verify=False)
         if response.status_code != 200:
-            print(f'Error fetching {path}: {response.status_code} {response.text}')
+            logger.error(f'failed to fetch {path}: {response.status_code} {response.text}')
             return None
         return response.json()
 
@@ -53,65 +57,77 @@ class TalkAPI:
         url = f'{self.base_url}{path}'
         response = self.session.post(url, json=payload, verify=False, headers={'X-Csrf-Token': self.xcsrf_token})
         if response.status_code != 200:
-            print(f'Error posting to {path}: {response.status_code} {response.text}')
+            logger.error(f'failed to post to {path}: {response.status_code} {response.text}')
             return False
-        return True
+        if response.text == '':
+            return True
+        return response.json()
 
 
     def delete_all_contacts(self):
         contacts = self.get_contacts()
         if contacts is None:
-            return False
+            return None, False
         if len(contacts) == 0:
-            print('No contacts to delete')
-            return True
+            logger.debug('no contacts to delete')
+            return None, True
         ids = {
             'ids': [c['uuid'] for c in contacts]
         }
-        print(ids)
-        return self.post('/proxy/talk/api/contact/delete', ids)
+        return ids['ids'], self.post('/proxy/talk/api/contact/delete', ids)
 
 
     def get_contacts(self):
         return self.get('/proxy/talk/api/contacts')
 
 
-    def save_contacts(self, contact_list_name, contacts):
+    def save_contacts(self, contact_list_name, contacts, contact_list_id):
+        logger.debug(f'saving {len(contacts)} contacts to list {contact_list_name} (#{contact_list_id}): {contacts}')
         cls = self.get_contact_lists()
-        contact_list_id = None
-        for cl in cls:
-            if cl['name'] == contact_list_name:
-                contact_list_id = cl['id']
-                break
-        if contact_list_id is None:
-            print(f'Error: contact list {contact_list_name} not found')
+        logger.debug(f'contact lists fetched: {json.dumps(cls, indent=2)}')
+        cl = cls[contact_list_name]
+        if cl is None:
+            logger.error(f'contact list {contact_list_name} not found')
             return None
 
-        print(f'Using contact list ID {contact_list_id} for {contact_list_name}')
+        contact_list_id = cl['id']
+        if contact_list_id is None:
+            logger.error(f'ID for contact list {contact_list_name} not found, contact list: {json.dumps(cl, indent=2)}')
+            return None
+
+        logger.debug(f'ising contact list ID {contact_list_id} for {contact_list_name}')
         payload = {
-            'contacts': [self.as_unifi(c) for c in contacts],
+            'contacts': [self.as_unifi(c, contact_list_id) for c in contacts],
             'contactListId': contact_list_id
         }
-        print(f'Saving {payload}')
-        return None
+        logger.debug(f'saving {payload}')
         return self.post('/proxy/talk/api/contacts', payload)
 
 
     def get_contact_lists(self):
-        return self.get('/proxy/talk/api/contact_list')
-    
+        cls = self.get('/proxy/talk/api/contact_list')
+        cl_map = {}
+        logger.debug(f'fetched contact lists: {cls}')
+        for cl in cls:
+            cl_map[cl['name']] = cl
+        logger.debug(f'contact list map: {cl_map}')
+        return cl_map
 
-    def as_unifi(self, contact: Contact):
+    def as_unifi(self, contact: Contact, contact_list_id: int):
+        numbers = []
+        self.add_number(numbers, contact.mobile_number, 'mobile')
+        self.add_number(numbers, contact.home_number, 'home')
+        self.add_number(numbers, contact.work_number, 'work')
         return {
-            'id': '',
-            'uuid': '',
             'first_name': contact.first_name,
             'last_name': contact.last_name,
-            'numbers': [
-                {'did': contact.mobile_number, 'label': 'mobile'},
-                {'did': contact.home_number, 'label': 'home'},
-                {'did': contact.work_number, 'label': 'work'},
-            ],
+            'numbers': numbers,
             'email': contact.email,
+            'contactLists': [contact_list_id],
             'invalid_field': False,
         }
+    
+
+    def add_number(self, numbers, number, label):
+        if number != '':
+            numbers.append({'did': number, 'label': label})
