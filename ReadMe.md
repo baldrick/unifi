@@ -2,7 +2,7 @@
 
 This is a Python-based CLI to interact with Unifi kit.  If you've got constructive criticism about my Python code please let me know - I haven't written a lot of it ;-)
 
-[!IMPORTANT]
+> [!IMPORTANT]
 > As it stands, the interactions with any Unifi controller are insecure.
 > If you're the subject of a man-in-the-middle attack, that's on you.
 
@@ -15,7 +15,7 @@ I kinda nerd-sniped myself with this project, initially I just wanted to see if 
 * ooh, avatars
 * non-Talk stuff
 
-[!NOTE]
+> [!NOTE]
 > Unifi Talk endpoints used here have been reverse-engineered so may break
 > if Unifi change their (undocumented) API.
 
