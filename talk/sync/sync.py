@@ -9,16 +9,25 @@ HEADER = 'first_name,last_name,company,job_title,email,mobile_number,home_number
 def add_commands(subparsers):
     sync_parser = subparsers.add_parser('sync', help='sync contacts from Google to Unifi Talk')
     sync_parser.add_argument('--labels', nargs='+', help='contacts for these labels will be synced', type=str)
+    sync_parser.add_argument('--csv', action='store_const', const=True, help='only output contacts to CSV files')
     sync_parser.set_defaults(func=sync_contacts)
 
 
 def sync_contacts(args):
+    if args.labels is None or len(args.labels) == 0:
+        print('Error: at least one label must be specified for sync')
+        return
+
     api = TalkAPI(args.server, args.username, args.password)
     raw_contacts = GoogleContacts()
     filtered_contacts = {}
     for label in args.labels:
         filtered_contacts[label] = raw_contacts.filter(label)
         write_csv(filtered_contacts[label], label)
+
+    if args.csv:
+        print('Only CSV output requested, not syncing to Unifi Talk')
+        return
 
     deleted = api.delete_all_contacts()
     if deleted:
