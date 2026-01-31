@@ -77,3 +77,9 @@ Unifi Talk's contact management is ... limited.
 e.g. a phone number can't be used by more than one contact (presumably so reverse lookup can do something sensible to tell you who's calling).  This is a pain if people live together and you have their landline number (perhaps anachronistic in the modern age of people only having mobies and eschewing landlines but in my case plenty of people still have one) against both contacts.  I've attempted to address this by creating a "$surname home ($first $names)" contact and removing the home phone number from other contacts.  It works for me.
 
 You're also limited to home, work & mobile numbers (ok and fax (!) and _other_, both of which I've ignored) so your Google contacts need to have phone numbers with these details.  If there's no phone number against a Google contact, it won't get imported (what would be the point?).
+
+### TODO
+
+* Add filtering by favourites
+* Allow download of all contacts regardless of label
+* Allow labels to be combined into a single file / upload

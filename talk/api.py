@@ -95,7 +95,7 @@ class TalkAPI:
             logger.error(f'ID for contact list {contact_list_name} not found, contact list: {json.dumps(cl, indent=2)}')
             return None
 
-        logger.debug(f'ising contact list ID {contact_list_id} for {contact_list_name}')
+        logger.debug(f'contact list ID {contact_list_id} for {contact_list_name}')
         payload = {
             'contacts': [self.as_unifi(c, contact_list_id) for c in contacts],
             'contactListId': contact_list_id
@@ -125,6 +125,7 @@ class TalkAPI:
             'email': contact.email,
             'contactLists': [contact_list_id],
             'invalid_field': False,
+            'temporary_avatar': contact.avatar,
         }
     
 

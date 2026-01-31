@@ -12,9 +12,7 @@ class Contact:
     mobile_number: str
     home_number: str
     work_number: str
-
-    def unifi_csv(self):
-        return f'"{self.first_name}","{self.last_name}",,,"{self.email}","{self.mobile_number}","{self.home_number}","{self.work_number}",,'
+    avatar:str # base64 encoded
 
     def grandstream_xml(self, id):
         # Should use a library to generate this but it's not obvious which one...
@@ -39,6 +37,10 @@ class Contact:
                     <accountindex>{account_index}</accountindex>
             </Phone>
             '''
+
+    def unifi_csv(self):
+        return f'"{self.first_name}","{self.last_name}",,,"{self.email}","{self.mobile_number}","{self.home_number}","{self.work_number}",,'
+
 
 class Contacts:
     contacts = []
@@ -80,7 +82,7 @@ class Contacts:
                 fn = [c.first_name for c in cs]
                 fn.sort()
                 first_names = ','.join(fn)
-                results.append(Contact([label], cs[0].last_name, f'home ({first_names})', '', '', hn, ''))
+                results.append(Contact([label], cs[0].last_name, f'home ({first_names})', '', '', hn, '', ''))
                 logger.debug(f'first names: {first_names}, results:{results}')
                 for c in cs:
                     c.home_number = ''

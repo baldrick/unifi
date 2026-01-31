@@ -1,5 +1,7 @@
+import base64
 import logging
 import os
+import requests
 from talk.contact import Contact, Contacts
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -46,7 +48,7 @@ class GoogleContacts:
         results = service.people().connections().list(
             resourceName='people/me',
             pageSize=1000,
-            personFields='names,emailAddresses,phoneNumbers,memberships'
+            personFields='names,emailAddresses,phoneNumbers,memberships,photos'
         ).execute()
         
         return results.get('connections', [])
@@ -58,36 +60,80 @@ class GoogleContacts:
         if GoogleContacts.PASSED in labels:
             return None
 
-        names = person.get('names', [])
-        if not names:
+        first_name, last_name = GoogleContacts.names(person)
+        if first_name is None and last_name is None:
+            # Not sure when we'd ever have a contact with no names...
             return None
-        first_name = names[0].get('givenName', '')
-        last_name = names[0].get('familyName', '')
 
-        phone_numbers = person.get('phoneNumbers', [])
-        if not phone_numbers or len(phone_numbers) == 0:
+        mobile, home, work = GoogleContacts.phone_numbers(person)
+        if mobile is None and home is None and work is None:
             # This export is going to be used for phone contacts so if there are no numbers, skip.
             return None
+
+        return Contact(
+            labels,
+            first_name,
+            last_name,
+            GoogleContacts.email(person, first_name, last_name),
+            mobile,
+            home,
+            work,
+            GoogleContacts.avatar(person)
+            )
+
+
+    def names(person):
+        names = person.get('names', [])
+        if not names:
+            return None, None
+        return names[0].get('givenName', ''), names[0].get('familyName', '')
+
+
+    def phone_numbers(person):
+        phone_numbers = person.get('phoneNumbers', [])
+        if not phone_numbers or len(phone_numbers) == 0:
+            return None, None, None
         # Unifi doesn't like a phone number being specified if it's empty
         # (the Talk UI throws an error and you can't see any contacts).
-        mobile_number = ''
-        home_number = ''
-        work_number = ''
+        mobile = ''
+        home = ''
+        work = ''
         for number in phone_numbers:
             phone_number = number.get('canonicalForm', '') or number.get('value', '')
             match number.get('type', '').lower():
                 case 'mobile':
-                    mobile_number = phone_number
+                    mobile = phone_number
                 case 'home':
-                    home_number = phone_number
+                    home = phone_number
                 case 'work':
-                    work_number = phone_number
+                    work = phone_number
+        return mobile, home, work
 
+
+    def email(person, first_name, last_name):
         email_addresses = person.get('emailAddresses', [])
         email_addresses.sort(key=lambda e: e.get('value', ''))
         email = next((e.get('value', '') for e in email_addresses if e.get('type', '').lower() == 'main'), None)
         if len(email_addresses) > 1 and email is None:
             email = email_addresses[0].get('value', '')
-            logger.warning(f'{len(email_addresses)} email addresses for {first_name} {last_name}, specify one as "main", default to first one alphabetically ({email})')
+            logger.warning(f'{len(email_addresses)} email addresses for {first_name} {last_name}, specify one as "main", defaulting to first one alphabetically ({email})')
+        return email
 
-        return Contact(labels, first_name, last_name, email, mobile_number, home_number, work_number)
+
+    def avatar(person):
+        avatar = None
+        photos = person.get('photos')
+        for photo in photos:
+            m = photo.get('metadata', {})
+            if not m.get('primary', False):
+                continue
+            if m.get('source', {}).get('type', '') != 'PROFILE':
+                continue
+            url = photo.get('url', '')
+            if url is not None:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    binary_content = response.content
+                    avatar = base64.b64encode(binary_content).decode('utf-8')
+                    break
+        return avatar
