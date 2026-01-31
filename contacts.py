@@ -7,10 +7,7 @@ import google_contacts.commands
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser('unifi')
-    parser.add_argument('--server', help='Unifi server address', type=str, required=True)
-    parser.add_argument('--username', help='username for Unifi', type=str, required=True)
-    parser.add_argument('--password', help='password for Unifi', type=str, required=True)
+    parser = argparse.ArgumentParser('contacts')
     parser.add_argument('--log-level', help='set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)', type=str, default='INFO')
     subparsers = parser.add_subparsers(help='sub-command help')
     talk.unifi_talk.add_commands(subparsers)

@@ -1,6 +1,6 @@
-# Unifi CLI
+# Contacts CLI
 
-This is a Python-based CLI to interact with Unifi kit.  If you've got constructive criticism about my Python code please let me know - I haven't written a lot of it ;-)
+This is a Python-based CLI primarily built to interact with Unifi kit.  If you've got constructive criticism about my Python code please let me know - I haven't written a lot of it ;-)
 
 > [!IMPORTANT]
 > As it stands, the interactions with any Unifi controller are insecure.
@@ -21,15 +21,17 @@ I kinda nerd-sniped myself with this project, initially I just wanted to see if 
 
 There's a hierarchy of commands to simplify adding network / protect at some point.  `talk` is the only top level command at the moment.
 
-All commands expect these flags:
+All commands accept an optional flag:
+
+* `--log-level` to control, obvs, log level (DEBUG, INFO, etc.)
+
+## Unifi
+
+All unifi commands expect these flags:
 
 * `--server` is the endpoint of your Unifi controller
 * `--username` is the name of the user to log in to the controller
 * `--password` is, well, duh, the password of the user
-
-And there's an optional flag:
-
-* `--log-level` to control, obvs, log level (DEBUG, INFO, etc.)
 
 To run the CLI you'll first need to:
 
@@ -40,9 +42,9 @@ To run the CLI you'll first need to:
   *  I assume there are similar switches with other IDEs, you'll need to figure that out yourself.
 * Run `deactivate` when you're done & want to leave the environment.
 
-## Talk
+### Talk
 
-`talk` supports the following command structure:
+`unifi talk` supports the following command structure:
 
 * get - to get contact info
   * contacts - get contact info
@@ -56,13 +58,13 @@ To run the CLI you'll first need to:
 For example:
 
 ```shell
-$ python unifi.py --server https://your.unifi --username you --password yourpwd talk get contacts
+$ ./contacts.py unifi --server https://your.unifi --username you --password yourpwd talk get contacts
 # outputs raw contact info
 
-$ python unifi.py --server https://your.unifi --username you --password yourpwd talk get lists
+$ ./contacts.py unifi --server https://your.unifi --username you --password yourpwd talk get lists
 # outputs raw contact lists
 
-$ ./unifi.py --server https://your.unifi --username you --password yourpwd sync --labels Family Friends --csv --unifi
+$ ./contacts.py unifi --server https://your.unifi --username you --password yourpwd sync --labels Family Friends --unifi_csv --unifi_talk
 # Gets contacts from Google labelled "Family" or "Friends".
 # Writes two files: Family.csv and Friends.csv
 # Then deletes *all* contacts from Unifi Talk,
@@ -78,7 +80,16 @@ e.g. a phone number can't be used by more than one contact (presumably so revers
 
 You're also limited to home, work & mobile numbers (ok and fax (!) and _other_, both of which I've ignored) so your Google contacts need to have phone numbers with these details.  If there's no phone number against a Google contact, it won't get imported (what would be the point?).
 
-### TODO
+## Google
+
+There's just one command here for now, `google get`, for example:
+
+```shell
+$ ./contacts.py google get
+# Gets contacts from Google.
+```
+
+## TODO
 
 * Add filtering by favourites
 * Allow download of all contacts regardless of label
