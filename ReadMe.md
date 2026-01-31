@@ -94,3 +94,5 @@ $ ./contacts.py google get
 * Add filtering by favourites
 * Allow download of all contacts regardless of label
 * Allow labels to be combined into a single file / upload
+* Add network/protect integration with `unifi` command ... but then should `contacts.py` be renamed :-)
+* Add automated upload to Grandstream phones

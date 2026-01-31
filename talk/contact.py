@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Contact:
-    labels: str
+    labels: str # Array of labels
     first_name: str
     last_name: str
     email: str
@@ -29,10 +29,10 @@ class Contact:
             <Primary>0</Primary>
         </Contact>'''
 
-    def grandstream_xml_number(self, account_index, label, number):
+    def grandstream_xml_number(self, account_index, phone_label, number):
         if len(number) == 0:
             return ''
-        return f'''<Phone type="{label}">
+        return f'''<Phone type="{phone_label}">
                     <phonenumber>{number}</phonenumber>
                     <accountindex>{account_index}</accountindex>
             </Phone>
@@ -51,16 +51,17 @@ class Contacts:
     def __len__(self):
         return len(self.contacts)
 
-    def normalized(self, label):
-        # Get the contacts matching the given label.
-        contacts = [c for c in self.contacts if label.lower() in c.labels]
+    def normalized(self, labels):
+        # Get the contacts with any label matching the given labels.
+        lower_labels = [l.lower() for l in labels]
+        contacts = [c for c in self.contacts if any(l.lower() in lower_labels for l in c.labels)]
         # Go through contacts finding those sharing a home number
         # For those, create a "surname home (first names)" contact
         # and remove the home number from the original contact.
-        contacts.extend(self.shared_home(contacts, label))
+        contacts.extend(self.shared_home(contacts, labels))
         return contacts
     
-    def shared_home(self, contacts, label):
+    def shared_home(self, contacts, labels):
         # Gather contacts by home number.
         home_contacts = {}
         for c in contacts:
@@ -82,7 +83,7 @@ class Contacts:
                 fn = [c.first_name for c in cs]
                 fn.sort()
                 first_names = ','.join(fn)
-                results.append(Contact([label], cs[0].last_name, f'home ({first_names})', '', '', hn, '', ''))
+                results.append(Contact(labels, cs[0].last_name, f'home ({first_names})', '', '', hn, '', ''))
                 logger.debug(f'first names: {first_names}, results:{results}')
                 for c in cs:
                     c.home_number = ''

@@ -10,18 +10,14 @@ HEADER = 'first_name,last_name,company,job_title,email,mobile_number,home_number
 
 def add_commands(subparsers):
     sync_parser = subparsers.add_parser('sync', help='sync contacts from Google to Unifi Talk')
-    sync_parser.add_argument('--labels', nargs='+', help='contacts for these labels will be synced', type=str)
-    sync_parser.add_argument('--grandstream', action='store_const', const=True, help='output contacts to XML file for Grandstream')
-    sync_parser.add_argument('--unifi_csv', action='store_const', const=True, help='output contacts to CSV file for Unifi')
-    sync_parser.add_argument('--unifi_talk', action='store_const', const=True, help='sync contacts with Unifi Talk')
+    sync_parser.add_argument('--concatenate', action='store_true', help='output contacts for all labels together')
+    sync_parser.add_argument('--grandstream', action='store_true', help='output contacts to XML file for Grandstream')
+    sync_parser.add_argument('--unifi_csv', action='store_true', help='output contacts to CSV file for Unifi')
+    sync_parser.add_argument('--unifi_talk', action='store_true', help='sync contacts with Unifi Talk')
     sync_parser.set_defaults(func=sync_contacts)
 
 
 def sync_contacts(args):
-    if args.labels is None or len(args.labels) == 0:
-        logger.error('at least one label must be specified for sync')
-        return
-
     contacts = GoogleContacts().parsed_contacts
 
     if not args.grandstream and not args.unifi_csv and not args.unifi_talk:
@@ -43,7 +39,7 @@ def write_grandstream_xml(args, contacts):
         filename = f'{label}.xml'
         with open(filename, 'w') as f:
             f.write('<AddressBook>\n')
-            f.write('\n'.join([f'{c.grandstream_xml(i)}' for i, c in enumerate(contacts.normalized(label))]))
+            f.write('\n'.join([f'{c.grandstream_xml(i)}' for i, c in enumerate(contacts.normalized([label]))]))
             f.write('</AddressBook>')
         logger.info(f'wrote {filename}')
 
@@ -56,7 +52,7 @@ def write_unifi_csv(args, contacts):
         filename = f'{label}.csv'
         with open(filename, 'w') as f:
             f.write(HEADER + '\n')
-            f.write('\n'.join([f'{c.unifi_csv()}' for c in contacts.normalized(label)]))
+            f.write('\n'.join([f'{c.unifi_csv()}' for c in contacts.normalized([label])]))
         logger.info(f'wrote {filename}')
 
 
@@ -73,6 +69,6 @@ def sync_unifi_talk(args, contacts):
     logger.info(f'deleted all {len(ids)} contacts from Unifi Talk') if ids is not None else logger.info('no contacts to delete from Unifi Talk')
     cl_map = api.get_contact_lists()
     for label in args.labels:
-        group_contacts = contacts.normalized(label)
+        group_contacts = contacts.normalized([label])
         api.save_contacts(label, group_contacts, cl_map[label]['id'])
         logger.info(f'saved {len(group_contacts)} {label} contacts to Unifi Talk')

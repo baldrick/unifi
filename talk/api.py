@@ -113,6 +113,7 @@ class TalkAPI:
         logger.debug(f'contact list map: {cl_map}')
         return cl_map
 
+
     def as_unifi(self, contact: Contact, contact_list_id: int):
         numbers = []
         self.add_number(numbers, contact.mobile_number, 'mobile')
