@@ -49,8 +49,9 @@ To run the CLI you'll first need to:
   * lists - get contact lists
 * sync - synchronize Google contacts with Unifi Talk; *deletes all existing Unifi Talk contacts!*
   * takes a list of `labels` - these correspond to labels in Google contacts.  Be careful of importing labels where one contact appears in both, de-duplication at that level is not handled.
-  * If the `--csv` argument is given, a CSV file per label will be written ready for importing to Unifi Talk.
-  * If the `--unifi` argument is given, the contacts will be directly uploaded to Unifi Talk and associated with a contact list of the same name as the label.
+  * If the `--grandstream` argument is given, an XML file per label will be written ready for importing to Grandstream.  This isn't super-useful, we probably actually want a single XML file for all labels.
+  * If the `--unifi_csv` argument is given, a CSV file per label will be written ready for importing to Unifi Talk.
+  * If the `--unifi_talk` argument is given, the contacts will be directly uploaded to Unifi Talk and associated with a contact list of the same name as the label.
 
 For example:
 

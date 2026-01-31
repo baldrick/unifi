@@ -1,14 +1,17 @@
-class Contact:
-    def __init__(self, first_name, last_name, email, mobile_number, home_number, work_number):
-        self.first_name = first_name
-        self.last_name = last_name
-        self.email = email
-        self.mobile_number = mobile_number
-        self.home_number = home_number
-        self.work_number = work_number
+from dataclasses import dataclass
+import logging
 
-    def __str__(self):
-        return self.unifi_csv()
+logger = logging.getLogger(__name__)
+
+@dataclass
+class Contact:
+    labels: str
+    first_name: str
+    last_name: str
+    email: str
+    mobile_number: str
+    home_number: str
+    work_number: str
 
     def unifi_csv(self):
         return f'"{self.first_name}","{self.last_name}",,,"{self.email}","{self.mobile_number}","{self.home_number}","{self.work_number}",,'
@@ -36,3 +39,52 @@ class Contact:
                     <accountindex>{account_index}</accountindex>
             </Phone>
             '''
+
+class Contacts:
+    contacts = []
+
+    def __init__(self, contacts):
+        self.contacts = contacts
+
+    def __len__(self):
+        return len(self.contacts)
+
+    def normalized(self, label):
+        # Get the contacts matching the given label.
+        contacts = [c for c in self.contacts if label.lower() in c.labels]
+        # Go through contacts finding those sharing a home number
+        # For those, create a "surname home (first names)" contact
+        # and remove the home number from the original contact.
+        contacts.extend(self.shared_home(contacts, label))
+        return contacts
+    
+    def shared_home(self, contacts, label):
+        # Gather contacts by home number.
+        home_contacts = {}
+        for c in contacts:
+            if c.home_number is None or len(c.home_number) == 0:
+                continue
+            hn = f'{c.home_number}'
+            if hn in home_contacts:
+                home_contacts[hn].append(c)
+            else:
+                home_contacts[hn] = [c]
+
+        # Create separate array of "surname home (first1, first2...)" contacts
+        # for contacts who share a home number.  Clear the home number for the
+        # sharing contacts.
+        logger.debug(f'contacts by home number: {home_contacts}')
+        results = []
+        for hn, cs in home_contacts.items():
+            if len(cs) > 1:
+                fn = [c.first_name for c in cs]
+                fn.sort()
+                first_names = ','.join(fn)
+                results.append(Contact([label], cs[0].last_name, f'home ({first_names})', '', '', hn, ''))
+                logger.debug(f'first names: {first_names}, results:{results}')
+                for c in cs:
+                    c.home_number = ''
+        logger.info(f'shared_home results:{results}')
+        return results
+
+    

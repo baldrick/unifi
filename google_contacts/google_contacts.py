@@ -1,6 +1,6 @@
 import logging
 import os
-from talk.contact import Contact
+from talk.contact import Contact, Contacts
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -14,8 +14,14 @@ class GoogleContacts:
     TOKEN_FILE = '.google/token.json'
     CLIENT_SECRETS_FILE = '.google/credentials.json'
 
+    # Contacts who've died I put in this group ... if anyone else ends up using
+    # this code, they'll need a similar group if they don't simply delete the
+    # contact.  This is the group's ID, not its name.
+    PASSED='5815031b8d533454'
+
     def __init__(self):
         self.raw_contacts = GoogleContacts.fetch()
+        self.parsed_contacts = Contacts([p for c in self.raw_contacts if (p := GoogleContacts.parse(c)) is not None])
 
     def fetch():
         creds = None
@@ -46,26 +52,10 @@ class GoogleContacts:
         return results.get('connections', [])
 
 
-    def filter(self, group_id):
-        all_contacts = []
-        for person in self.raw_contacts:
-            parsed_contact = GoogleContacts.parse(person, group_id)
-            if parsed_contact is not None:
-                all_contacts.append(parsed_contact)
-        return all_contacts
-        
-
-    def parse(person, group_id):
+    def parse(person):
         memberships = person.get('memberships', [])
-        include = False
-        for membership in memberships:
-            group = membership.get('contactGroupMembership', {}).get('contactGroupResourceName')
-            if group == f'contactGroups/{group_id.lower()}':
-                include = True
-            if group == 'contactGroups/5815031b8d533454': # Passed :-(
-                include = False
-                break
-        if not include:
+        labels = [m.get('contactGroupMembership', {}).get('contactGroupResourceName').removeprefix('contactGroups/') for m in memberships]
+        if GoogleContacts.PASSED in labels:
             return None
 
         names = person.get('names', [])
@@ -78,30 +68,26 @@ class GoogleContacts:
         if not phone_numbers or len(phone_numbers) == 0:
             # This export is going to be used for phone contacts so if there are no numbers, skip.
             return None
+        # Unifi doesn't like a phone number being specified if it's empty
+        # (the Talk UI throws an error and you can't see any contacts).
         mobile_number = ''
         home_number = ''
         work_number = ''
         for number in phone_numbers:
-            type_ = number.get('type', '').lower()
-            phone_number = number.get('canonicalForm', '')
-            raw = number.get('value', '')
-            if not phone_number:
-                phone_number = raw
-            if type_ == 'mobile':
-                mobile_number = phone_number
-            elif type_ == 'home':
-                home_number = phone_number
-            elif type_ == 'work':
-                work_number = phone_number
+            phone_number = number.get('canonicalForm', '') or number.get('value', '')
+            match number.get('type', '').lower():
+                case 'mobile':
+                    mobile_number = phone_number
+                case 'home':
+                    home_number = phone_number
+                case 'work':
+                    work_number = phone_number
 
-        email = ''
         email_addresses = person.get('emailAddresses', [])
-        for address in email_addresses:
-            match address.get('type', '').lower():
-                case 'main':
-                    email = address.get('value', '')
-                    break
-        if len(email_addresses) > 1 and email == '':
-            logger.warning(f'{len(email_addresses)} email addresses for {first_name} {last_name}')
+        email_addresses.sort(key=lambda e: e.get('value', ''))
+        email = next((e.get('value', '') for e in email_addresses if e.get('type', '').lower() == 'main'), None)
+        if len(email_addresses) > 1 and email is None:
+            email = email_addresses[0].get('value', '')
+            logger.warning(f'{len(email_addresses)} email addresses for {first_name} {last_name}, specify one as "main", default to first one alphabetically ({email})')
 
-        return Contact(first_name, last_name, email, mobile_number, home_number, work_number)
+        return Contact(labels, first_name, last_name, email, mobile_number, home_number, work_number)
