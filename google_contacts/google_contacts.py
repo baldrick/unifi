@@ -10,6 +10,16 @@ from googleapiclient.discovery import build
 
 logger = logging.getLogger(__name__)
 
+
+def get(ctx, raw, parsed):
+    g = GoogleContacts()
+    # TODO: filter by labels
+    if raw:
+        logger.info(f'{len(g.parsed_contacts)} raw contacts found: {json.dumps(g.raw_contacts, default=lambda o: o.__dict__, sort_keys=True,indent=2)}')
+    if parsed:
+        logger.info(f'{len(g.parsed_contacts)} contacts found: {json.dumps(g.parsed_contacts, default=lambda o: o.__dict__, sort_keys=True,indent=2)}')
+
+
 class GoogleContacts:
     # If modifying these scopes, delete the token file.
     SCOPES = ['https://www.googleapis.com/auth/contacts.readonly']

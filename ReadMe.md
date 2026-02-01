@@ -1,6 +1,8 @@
-# Contacts CLI
+# "Hammer" CLI
 
 This is a Python-based CLI primarily built to interact with Unifi kit.  If you've got constructive criticism about my Python code please let me know - I haven't written a lot of it ;-)
+
+It's called "hammer" because it's a bit of combination of tools... and [naming is hard](https://xkcd.com/910/).
 
 > [!IMPORTANT]
 > As it stands, the interactions with any Unifi controller are insecure.
@@ -50,7 +52,7 @@ To run the CLI you'll first need to:
   * contacts - get contact info
   * lists - get contact lists
 * sync - synchronize Google contacts with Unifi Talk; *deletes all existing Unifi Talk contacts!*
-  * takes a list of `labels` - these correspond to labels in Google contacts.  Be careful of importing labels where one contact appears in both, de-duplication at that level is not handled.
+  * takes multiple `--label`s - these correspond to labels in Google contacts.  Be careful of importing labels where one contact appears in both, de-duplication at that level is not handled.
   * If the `--grandstream` argument is given, an XML file per label will be written ready for importing to Grandstream.  This isn't super-useful, we probably actually want a single XML file for all labels.
   * If the `--unifi_csv` argument is given, a CSV file per label will be written ready for importing to Unifi Talk.
   * If the `--unifi_talk` argument is given, the contacts will be directly uploaded to Unifi Talk and associated with a contact list of the same name as the label.
@@ -58,15 +60,18 @@ To run the CLI you'll first need to:
 For example:
 
 ```shell
-$ ./contacts.py unifi --server https://your.unifi --username you --password yourpwd talk get contacts
-# outputs raw contact info
+# Supply credentials on the command line:
+$ hammer unifi --url https://your.unifi --username you --password yourpwd talk get contacts
+# outputs raw contact info from Unifi Talk
 
-$ ./contacts.py unifi --server https://your.unifi --username you --password yourpwd talk get lists
-# outputs raw contact lists
+# ... or put your server, username and password into environment variables or files:
+$ hammer unifi talk get lists
+# outputs raw contact lists from Unifi Talk
 
-$ ./contacts.py unifi --server https://your.unifi --username you --password yourpwd sync --labels Family Friends --unifi_csv --unifi_talk
+$ hammer --label Family --label Friends unifi talk sync --grandstream --unifi_csv --unifi_talk
 # Gets contacts from Google labelled "Family" or "Friends".
-# Writes two files: Family.csv and Friends.csv
+# Writes two files: Family.xml and Friends.xml for upload to Grandstream phones.
+# Writes two more files: Family.csv and Friends.csv for import into Unifi Talk.
 # Then deletes *all* contacts from Unifi Talk,
 # replaces them with the ones downloaded from Google
 # and associates the downloaded contacts with the contact list of the same name.
@@ -85,8 +90,8 @@ You're also limited to home, work & mobile numbers (ok and fax (!) and _other_, 
 There's just one command here for now, `google get`, for example:
 
 ```shell
-$ ./contacts.py google get
-# Gets contacts from Google.
+$ hammer google get --raw --parsed
+# Gets raw and/or parsed contacts from Google depending on the flags used.
 ```
 
 ## TODO
@@ -94,5 +99,5 @@ $ ./contacts.py google get
 * Add filtering by favourites
 * Allow download of all contacts regardless of label
 * Allow labels to be combined into a single file / upload
-* Add network/protect integration with `unifi` command ... but then should `contacts.py` be renamed :-)
+* Add network/protect integration with `unifi` command
 * Add automated upload to Grandstream phones

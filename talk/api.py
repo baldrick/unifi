@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import requests
 import urllib3
 from talk.contact import Contact
@@ -7,15 +8,18 @@ from talk.contact import Contact
 logger = logging.getLogger(__name__)
 
 class TalkAPI:
-    def __init__(self, base_url: str, username: str, password: str):
-        self.base_url = base_url
-        self.username = username
-        self.password = password
+    def __init__(self, ctx):
+        self.base_url = default(ctx, 'url')
+        self.username = default(ctx, 'username')
+        self.password = default(ctx, 'password')
         self.session = None
         urllib3.disable_warnings()
 
 
     def login(self):
+        if self.base_url is None:
+            logger.error('url not set')
+            return False
         if self.username is None:
             logger.error('username not set')
             return False
@@ -106,8 +110,10 @@ class TalkAPI:
 
     def get_contact_lists(self):
         cls = self.get('/proxy/talk/api/contact_list')
+        if cls is None:
+            return None
+        logger.debug(f'fetched {len(cls)} contact lists: {cls}')
         cl_map = {}
-        logger.debug(f'fetched contact lists: {cls}')
         for cl in cls:
             cl_map[cl['name']] = cl
         logger.debug(f'contact list map: {cl_map}')
@@ -133,3 +139,9 @@ class TalkAPI:
     def add_number(self, numbers, number, label):
         if number != '':
             numbers.append({'did': number, 'label': label})
+
+
+def default(ctx, name):
+    env_name = f'UNIFI_{name.upper()}'
+    filename = f'.unifi/{name.lower()}'
+    return ctx.obj[name] or os.environ.get(env_name, open(filename, 'r').readline().rstrip())

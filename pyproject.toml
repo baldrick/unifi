@@ -1,0 +1,15 @@
+[project]
+name = "hammer"
+version = "0.0.1"
+description = "Contacts CLI"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.1",
+]
+
+[project.scripts]
+hammer = "hammer:cli"
+
+[build-system]
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
