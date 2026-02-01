@@ -15,12 +15,12 @@ Top level CLI command with options that may apply to every command.
 @click.option('--label', multiple=True, help='apply functions only to the given label(s)')
 @click.option('--loglevel', default='INFO', help='set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
 @click.pass_context
-def cli(ctx, favourite, loglevel, label):
+def cli(ctx, favourite, label, loglevel):
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s %(message)s', datefmt='%H:%M:%S', level=getattr(logging, loglevel.upper(), None))
     ctx.ensure_object(dict)
     ctx.obj['favourite'] = favourite
-    ctx.obj['loglevel'] = loglevel.upper()
     ctx.obj['labels'] = label
+    ctx.obj['loglevel'] = loglevel.upper()
 
 '''
 unifi command group.
@@ -71,13 +71,14 @@ def lists(ctx):
 unifi talk sync command
 '''
 @talk_cli.command()
+@click.option('--additive', is_flag=True, default=False, help='only used with --unifi_talk, does not delete existing contacts or contact lists so use with care')
 @click.option('--concatenate', help='combine contacts into a single file / contact list with the given name')
 @click.option('--grandstream', is_flag=True, default=False, help='output contacts to XML file for Grandstream')
 @click.option('--unifi_csv', is_flag=True, default=False, help='output contacts (without contact list association) to CSV file for Unifi Talk')
 @click.option('--unifi_talk', is_flag=True, default=False, help='one-way sync contacts with Unifi Talk')
 @click.pass_context
-def sync(ctx, concatenate, grandstream, unifi_csv, unifi_talk):
-    talk.sync.sync_contacts(ctx, concatenate, grandstream, unifi_csv, unifi_talk)
+def sync(ctx, additive, concatenate, grandstream, unifi_csv, unifi_talk):
+    talk.sync.sync_contacts(ctx, additive, concatenate, grandstream, unifi_csv, unifi_talk)
 
 '''
 google command group.
