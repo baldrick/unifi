@@ -66,12 +66,13 @@ def lists(ctx):
 unifi talk sync command
 '''
 @talk_cli.command()
+@click.option('--concatenate', help='combine contacts into a single file / contact list with the given name')
 @click.option('--grandstream', is_flag=True, default=False, help='output contacts to XML file for Grandstream')
-@click.option('--unifi_csv', is_flag=True, default=False, help='output contacts to CSV file for Unifi Talk')
+@click.option('--unifi_csv', is_flag=True, default=False, help='output contacts (without contact list association) to CSV file for Unifi Talk')
 @click.option('--unifi_talk', is_flag=True, default=False, help='one-way sync contacts with Unifi Talk')
 @click.pass_context
-def sync(ctx, grandstream, unifi_csv, unifi_talk):
-    talk.sync.sync_contacts(ctx, grandstream, unifi_csv, unifi_talk)
+def sync(ctx, concatenate, grandstream, unifi_csv, unifi_talk):
+    talk.sync.sync_contacts(ctx, concatenate, grandstream, unifi_csv, unifi_talk)
 
 '''
 google command group.

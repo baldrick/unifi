@@ -61,11 +61,20 @@ class TalkAPI:
         url = f'{self.base_url}{path}'
         response = self.session.post(url, json=payload, verify=False, headers={'X-Csrf-Token': self.xcsrf_token})
         if response.status_code != 200:
-            logger.error(f'failed to post to {path}: {response.status_code} {response.text}')
+            logger.warning(f'failed to post to {path}: {response.status_code} {response.text}')
             return False
-        if response.text == '':
-            return True
-        return response.json()
+        return True
+
+
+    def delete(self, path: str):
+        if not self.login():
+            return False
+        url = f'{self.base_url}{path}'
+        response = self.session.delete(url, verify=False, headers={'X-Csrf-Token': self.xcsrf_token})
+        if response.status_code != 200:
+            logger.warning(f'failed to delete "{url}": {response.status_code} {response.text}')
+            return False
+        return True
 
 
     def delete_all_contacts(self):
@@ -108,10 +117,25 @@ class TalkAPI:
         return self.post('/proxy/talk/api/contacts', payload)
 
 
+    def delete_all_contact_lists(self, ignore_labels):
+        deleted = []
+        failed = []
+        cls = self.get_contact_lists()
+        for label, cl in cls.items():
+            if label in ignore_labels:
+                logger.debug(f'not deleting contact list {label}')
+                continue
+            if self.delete(f'/proxy/talk/api/contact_list/{cl["id"]}'):
+                deleted.append(cl['id'])
+            else:
+                failed.append(cl['id'])
+        return deleted, failed
+
+
     def get_contact_lists(self):
         cls = self.get('/proxy/talk/api/contact_list')
         if cls is None:
-            return None
+            return {}
         logger.debug(f'fetched {len(cls)} contact lists: {cls}')
         cl_map = {}
         for cl in cls:
@@ -119,6 +143,25 @@ class TalkAPI:
         logger.debug(f'contact list map: {cl_map}')
         return cl_map
 
+
+    def add_contact_lists_if_missing(self, labels):
+        cl_map = self.get_contact_lists()
+        logger.info(f'cl_map: {cl_map}')
+        success = True
+        for label in labels:
+            if cl_map.get(label):
+                logger.debug(f'not creating list {label} since it already exists')
+                continue
+            logger.debug(f'creating list {label}')
+            payload = {
+                'name': label,
+                'contacts': [],
+            }
+            response = self.post('/proxy/talk/api/contact_list', payload)
+            if not response:
+                logger.error(f'failed to create contact list {label}')
+                success = False
+        return success
 
     def as_unifi(self, contact: Contact, contact_list_id: int):
         numbers = []

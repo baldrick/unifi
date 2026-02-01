@@ -15,5 +15,4 @@ def get_contacts(ctx):
 def get_contact_lists(ctx):
     api = TalkAPI(ctx)
     contact_lists = api.get_contact_lists()
-    if contact_lists is not None:
-        logger.info(f'{len(contact_lists)} contact lists found: {json.dumps(contact_lists, indent=2)}')
+    logger.info(f'{len(contact_lists)} contact lists found: {json.dumps(contact_lists, indent=2)}')
