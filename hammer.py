@@ -1,8 +1,8 @@
 import click
 import logging
-import google_contacts.google_contacts
-import talk.get.get
-import talk.sync.sync
+import google_contacts
+import talk.get
+import talk.sync
 
 @click.group()
 @click.option('--loglevel', help='set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)', default='INFO')
@@ -41,17 +41,17 @@ def get(ctx):
 @click.option('--unifi_talk', is_flag=True, default=False, help='one-way sync contacts with Unifi Talk')
 @click.pass_context
 def sync(ctx, grandstream, unifi_csv, unifi_talk):
-    talk.sync.sync.sync_contacts(ctx, grandstream, unifi_csv, unifi_talk)
+    talk.sync.sync_contacts(ctx, grandstream, unifi_csv, unifi_talk)
 
 @get.command(help='retrieve contacts')
 @click.pass_context
 def contacts(ctx):
-    talk.get.get.get_contacts(ctx)
+    talk.get.get_contacts(ctx)
 
 @get.command(help='retrieve contact lists')
 @click.pass_context
 def lists(ctx):
-    talk.get.get.get_contact_lists(ctx)
+    talk.get.get_contact_lists(ctx)
 
 @cli.group()
 @click.pass_context
@@ -63,7 +63,7 @@ def google(ctx):
 @click.option('--raw', is_flag=True, default=False, help='output raw fetch results')
 @click.option('--parsed', is_flag=True, default=False, help='output parsed fetch results')
 def get(ctx, raw, parsed):
-    google_contacts.google_contacts.get(ctx, raw, parsed)
+    google_contacts.get(ctx, raw, parsed)
 
 if __name__ == "__main__":
     cli(obj={})

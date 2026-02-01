@@ -1,5 +1,5 @@
 import logging
-from google_contacts.google_contacts import GoogleContacts
+from google_contacts import GoogleContacts
 from talk.api import TalkAPI
 
 logger = logging.getLogger(__name__)
