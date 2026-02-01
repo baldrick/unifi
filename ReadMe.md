@@ -97,6 +97,7 @@ $ hammer google get --raw --parsed
 ## TODO
 
 * Add filtering by favourites
+* Apply label filtering to all commands (not just sync)?
 * Allow download of all contacts regardless of label
 * Allow labels to be combined into a single file / upload
 * Add network/protect integration with `unifi` command
