@@ -75,6 +75,9 @@ $ hammer --label Family --label Friends unifi talk sync --grandstream --unifi_cs
 # Then deletes *all* contacts from Unifi Talk,
 # replaces them with the ones downloaded from Google
 # and associates the downloaded contacts with the contact list of the same name.
+
+$ hammer --favourite --label Family unifi talk sync --unifi_talk
+# Gets favourite (starred) "Family" contacts from Google and syncs them to Unifi Talk.
 ```
 
 ### Caveats
@@ -92,12 +95,14 @@ There's just one command here for now, `google get`, for example:
 ```shell
 $ hammer google get --raw --parsed
 # Gets raw and/or parsed contacts from Google depending on the flags used.
+
+$ hammer --favourite google get --raw
+# Gets favourite contacts (starred) from Google, outputs in raw format.
 ```
 
 ## TODO
 
 * Add automated upload to Grandstream phones
-* Add filtering by favourites
 * Allow download of all contacts regardless of label
 * Apply label filtering to `unifi get contacts` command (not just `unifi talk sync` and `google get`)?
 * Add network/protect integration with `unifi` command

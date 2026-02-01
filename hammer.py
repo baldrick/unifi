@@ -4,18 +4,23 @@ import google_contacts
 import talk.get
 import talk.sync
 
+logger = logging.getLogger(__name__)
+
+
 '''
 Top level CLI command with options that may apply to every command.
 '''
 @click.group()
-@click.option('--loglevel', help='set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)', default='INFO')
+@click.option('--favourite', is_flag=True, default=False, help='only use favourite (starred) contacts')
+@click.option('--loglevel', default='INFO', help='set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
 @click.option('--label', multiple=True, help='apply functions only to the given label(s)')
 @click.pass_context
-def cli(ctx, loglevel, label):
-    ctx.ensure_object(dict)
-    ctx.obj['loglevel'] = loglevel
-    ctx.obj['labels'] = label
+def cli(ctx, favourite, loglevel, label):
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s %(message)s', datefmt='%H:%M:%S', level=getattr(logging, loglevel.upper(), None))
+    ctx.ensure_object(dict)
+    ctx.obj['favourite'] = favourite
+    ctx.obj['loglevel'] = loglevel.upper()
+    ctx.obj['labels'] = label
 
 '''
 unifi command group.

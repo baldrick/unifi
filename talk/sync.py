@@ -8,7 +8,10 @@ logger = logging.getLogger(__name__)
 HEADER = 'first_name,last_name,company,job_title,email,mobile_number,home_number,work_number,fax_number,other_number'
 
 def sync_contacts(ctx, concatenate, grandstream, unifi_csv, unifi_talk):
-    contacts = GoogleContacts().parsed_contacts
+    contacts = GoogleContacts(ctx).parsed_contacts
+    if len(contacts) == 0:
+        logger.warning('no contacts to sync, no action taken')
+        return
 
     if not (grandstream or unifi_csv or unifi_talk):
         logger.error('at least one output must be specified')
@@ -31,6 +34,9 @@ def write_grandstream_xml(ctx, concatenate, contacts):
 
 
 def write_grandstream_xml_file(contacts, filename):
+    if len(contacts) == 0:
+        logger.warning(f'no contacts for {filename}, no action taken')
+        return
     with open(filename, 'w') as f:
         f.write('<AddressBook>\n')
         f.write('\n'.join([f'{c.grandstream_xml(i)}' for i, c in enumerate(contacts)]))
@@ -48,6 +54,9 @@ def write_unifi_csv(ctx, concatenate, contacts):
 
 
 def write_unifi_csv_file(contacts, filename):
+    if len(contacts) == 0:
+        logger.warning(f'no contacts for {filename}, no action taken')
+        return
     with open(filename, 'w') as f:
         f.write(HEADER + '\n')
         f.write('\n'.join([f'{c.unifi_csv()}' for c in contacts]))
@@ -92,5 +101,8 @@ def sync_unifi_talk(ctx, concatenate, contacts):
     else:
         for label in labels:
             group_contacts = contacts.filter([label]).normalize(label)
+            if len(group_contacts) == 0:
+                logger.warning(f'no {label} contacts, that contact list will be empty')
+                continue
             api.save_contacts(label, group_contacts, cl_map[label]['id'])
             logger.info(f'saved {len(group_contacts)} {label} contacts to Unifi Talk')

@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_contacts(ctx):
+    # TODO: add filtering by labels (= contact list).
     api = TalkAPI(ctx)
     contacts = api.get_contacts()
     if contacts is not None:

@@ -97,7 +97,7 @@ class Contacts:
                 logger.debug(f'first names: {first_names}, results:{results}')
                 for c in cs:
                     c.home_number = ''
-        logger.info(f'shared_home results:{results}')
+        logger.debug(f'shared_home results:{results}')
         return results
 
     

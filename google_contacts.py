@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def get(ctx, raw, parsed):
-    g = GoogleContacts()
+    g = GoogleContacts(ctx)
     labels = ctx.obj['labels']
     if raw:
         output_raw = g.raw_contacts
@@ -41,8 +41,12 @@ class GoogleContacts:
     # contact.  This is the group's ID, not its name.
     PASSED='5815031b8d533454'
 
-    def __init__(self):
+    def __init__(self, ctx):
         self.raw_contacts = GoogleContacts.fetch()
+        if ctx.obj['favourite']:
+            logger.info(f'filtering {len(self.raw_contacts)} by favourites')
+            self.raw_contacts = self.filter(['starred'])
+            logger.info(f'found {len(self.raw_contacts)} favourites')
         self.parsed_contacts = Contacts([p for c in self.raw_contacts if (p := GoogleContacts.parse(c)) is not None])
 
     def fetch():
