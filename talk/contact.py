@@ -60,19 +60,18 @@ class Contacts:
     def filter(self, labels):
         # Get the contacts with any label matching the given labels.
         lower_labels = [l.lower() for l in labels]
-        return [c for c in self.contacts if any(l.lower() in lower_labels for l in c.labels)]
+        return Contacts([c for c in self.contacts if any(l.lower() in lower_labels for l in c.labels)])
 
 
-    def normalized(self, labels):
-        contacts = self.filter(labels)
+    def normalize(self, label):
         # Go through contacts finding those sharing a home number
         # For those, create a "surname home (first names)" contact
         # and remove the home number from the original contact.
-        contacts.extend(self.shared_home(contacts, labels))
-        return contacts
+        self.contacts.extend(self.shared_home(self.contacts, label))
+        return self.contacts
 
 
-    def shared_home(self, contacts, labels):
+    def shared_home(self, contacts, label):
         # Gather contacts by home number.
         home_contacts = {}
         for c in contacts:
@@ -94,7 +93,7 @@ class Contacts:
                 fn = [c.first_name for c in cs]
                 fn.sort()
                 first_names = ','.join(fn)
-                results.append(Contact(labels, cs[0].last_name, f'home ({first_names})', '', '', hn, '', ''))
+                results.append(Contact([label], cs[0].last_name, f'home ({first_names})', '', '', hn, '', ''))
                 logger.debug(f'first names: {first_names}, results:{results}')
                 for c in cs:
                     c.home_number = ''
