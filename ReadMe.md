@@ -104,5 +104,5 @@ $ hammer --favourite google get --raw
 ## TODO
 
 * Add automated upload to Grandstream phones
-* Add network/protect integration with `unifi` command
 * Allow additive operations (e.g. don't delete contacts / contact lists from Unifi Talk)
+* Add network/protect integration with `unifi` command (unlikely as I have no need for it)
