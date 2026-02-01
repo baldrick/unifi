@@ -104,5 +104,4 @@ $ hammer --favourite google get --raw
 
 * Add automated upload to Grandstream phones
 * Allow download of all contacts regardless of label
-* Apply label filtering to `unifi get contacts` command (not just `unifi talk sync` and `google get`)?
 * Add network/protect integration with `unifi` command
