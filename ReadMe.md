@@ -10,12 +10,7 @@ It's called "hammer" because it's a bit of combination of tools... and [naming i
 
 So far this is just aimed at syncing Google contacts with Unifi Talk.  You need to set up your own Google project with access to the people API if you want to do this.  Currently you must set up contact lists in Unifi with the same names as the labels of Google contacts you wish to import, this sync won't do that for you (yet).
 
-I kinda nerd-sniped myself with this project, initially I just wanted to see if I could do it.  Then I couldn't stop until it was complete.  And, like any good project, it'll never be complete - I've got a few ideas about what to do next, including:
-
-* create contact lists in Unifi Talk automatically
-* allow syncing with no contact labels
-* ooh, avatars
-* non-Talk stuff
+I kinda nerd-sniped myself with this project, initially I just wanted to see if I could do it.  Then I couldn't stop until it was complete.  And, like any good project, it'll never be complete - I've got a few ideas about what to do next, see the TODO list at the end.
 
 > [!NOTE]
 > Unifi Talk endpoints used here have been reverse-engineered so may break
@@ -36,6 +31,8 @@ All unifi commands expect these flags:
 * `--url` is the endpoint of your Unifi controller
 * `--username` is the name of the user to log in to the controller
 * `--password` is, well, duh, the password of the user
+
+The command line arguments take precedence over environment variables (`UNIFI_URL`, `UNIFI_USERNAME` and `UNIFI_PASSWORD`) that may be used.  These take precedence over `.unifi/[url|username|password]` files that may also be used.
 
 To run the CLI you'll first need to:
 
