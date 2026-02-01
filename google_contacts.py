@@ -1,4 +1,5 @@
 import base64
+import json
 import logging
 import os
 import requests
@@ -13,11 +14,20 @@ logger = logging.getLogger(__name__)
 
 def get(ctx, raw, parsed):
     g = GoogleContacts()
-    # TODO: filter by labels
+    labels = ctx.obj['labels']
     if raw:
-        logger.info(f'{len(g.parsed_contacts)} raw contacts found: {json.dumps(g.raw_contacts, default=lambda o: o.__dict__, sort_keys=True,indent=2)}')
+        output_raw = g.raw_contacts
+        if labels is not None:
+            output_raw = g.filter(labels)
+        logger.info(json.dumps(output_raw, default=lambda o: o.__dict__, sort_keys=True,indent=2))
+        logger.info(f'{len(output_raw)} raw filtered contacts found')
     if parsed:
-        logger.info(f'{len(g.parsed_contacts)} contacts found: {json.dumps(g.parsed_contacts, default=lambda o: o.__dict__, sort_keys=True,indent=2)}')
+        output_parsed = g.parsed_contacts
+        if labels is not None:
+            output_parsed = g.parsed_contacts.filter(labels)
+        logger.info({json.dumps(output_parsed, default=lambda o: o.__dict__, sort_keys=True,indent=2)})
+        logger.info(f'{len(output_parsed)} parsed filtered contacts found')        
+    logger.info(f'{len(g.raw_contacts)} raw unfiltered contacts found, parsed to {len(g.parsed_contacts)}')
 
 
 class GoogleContacts:
@@ -58,10 +68,24 @@ class GoogleContacts:
         results = service.people().connections().list(
             resourceName='people/me',
             pageSize=1000,
-            personFields='names,emailAddresses,phoneNumbers,memberships,photos'
+            personFields='names,emailAddresses,phoneNumbers,memberships,photos,metadata'
         ).execute()
         
         return results.get('connections', [])
+
+
+    def filter(self, labels):
+        return [c for c in self.raw_contacts if GoogleContacts.is_member(c, labels)]
+
+
+    def is_member(person, labels):
+        memberships = person.get('memberships', [])
+        google_labels = {m.get('contactGroupMembership', {}).get('contactGroupResourceName').removeprefix('contactGroups/') for m in memberships}
+        # contacts = [c for c in self.contacts if any(l.lower() in lower_labels for l in c.labels)]
+        lower_labels = {l.lower() for l in labels}
+        intersection = google_labels.intersection(lower_labels)
+        logger.debug(f'{lower_labels} intersection with google labels {google_labels} is {intersection}')
+        return len(intersection) > 0
 
 
     def parse(person):
