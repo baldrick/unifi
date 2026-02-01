@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import requests
 import urllib3
 from talk.contact import Contact
@@ -185,6 +184,5 @@ class TalkAPI:
 
 
 def default(ctx, name):
-    env_name = f'UNIFI_{name.upper()}'
     filename = f'.unifi/{name.lower()}'
-    return ctx.obj[name] or os.environ.get(env_name, open(filename, 'r').readline().rstrip())
+    return ctx.obj[name] or open(filename, 'r').readline().rstrip()

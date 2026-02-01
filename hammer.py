@@ -26,9 +26,9 @@ def cli(ctx, favourite, label, loglevel):
 unifi command group.
 '''
 @cli.group()
-@click.option('--url', help='Unifi server address')
-@click.option('--username', help='Unifi username')
-@click.option('--password', help='Unifi password')
+@click.option('--url', envvar='UNIFI_URL', help='Unifi server address')
+@click.option('--username', envvar='UNIFI_USERNAME', help='Unifi username')
+@click.option('--password', envvar='UNIFI_PASSWORD', help='Unifi password')
 @click.pass_context
 def unifi(ctx, url, username, password):
     ctx.obj['url'] = url
