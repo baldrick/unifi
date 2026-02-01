@@ -25,11 +25,14 @@ def sync_contacts(ctx, concatenate, grandstream, unifi_csv, unifi_talk):
 def write_grandstream_xml(ctx, concatenate, contacts):
     # Not sure if contacts really need to be normalized for Grandstream phones
     # but we may as well be consistent...
+    labels = ctx.obj['labels']
     if concatenate is not None:
-        contacts = contacts.filter(ctx.obj['labels']).normalize(concatenate)
+        contacts = contacts.filter(labels).normalize(concatenate)
         write_grandstream_xml_file(contacts, f'{concatenate}.xml')
+    elif len(labels) == 0:
+        write_grandstream_xml_file(contacts.normalize('all'), 'all.xml')
     else:
-        for label in ctx.obj['labels']:
+        for label in labels:
             write_grandstream_xml_file(contacts.filter([label]).normalize(label), f'{label}.xml')
 
 
@@ -41,13 +44,16 @@ def write_grandstream_xml_file(contacts, filename):
         f.write('<AddressBook>\n')
         f.write('\n'.join([f'{c.grandstream_xml(i)}' for i, c in enumerate(contacts)]))
         f.write('</AddressBook>')
-    logger.info(f'wrote {len(contacts)} to {filename}')
+    logger.info(f'wrote {len(contacts)} contacts to {filename}')
 
 
 def write_unifi_csv(ctx, concatenate, contacts):
+    labels = ctx.obj['labels']
     if concatenate is not None:
         contacts = contacts.filter(ctx.obj['labels']).normalize(concatenate)
         write_unifi_csv_file(contacts, f'{concatenate}.csv')
+    elif len(labels) == 0:
+        write_unifi_csv_file(contacts.normalize('all'), 'all.csv')
     else:
         for label in ctx.obj['labels']:
             write_unifi_csv_file(contacts.filter([label]).normalize(label), f'{label}.csv')
@@ -60,7 +66,7 @@ def write_unifi_csv_file(contacts, filename):
     with open(filename, 'w') as f:
         f.write(HEADER + '\n')
         f.write('\n'.join([f'{c.unifi_csv()}' for c in contacts]))
-    logger.info(f'wrote {len(contacts)} to {filename}')
+    logger.info(f'wrote {len(contacts)} contacts to {filename}')
 
 
 def sync_unifi_talk(ctx, concatenate, contacts):
@@ -98,6 +104,14 @@ def sync_unifi_talk(ctx, concatenate, contacts):
         group_contacts = contacts.filter(labels).normalize(concatenate)
         api.save_contacts(concatenate, group_contacts, cl_map[concatenate]['id'])
         logger.info(f'saved {len(group_contacts)} {concatenate} contacts to Unifi Talk')
+    if len(labels) == 0:
+        if not api.add_contact_lists_if_missing(['All']):
+            logger.error(f'failed to create an "All" contact list')
+            return
+        cl_map = api.get_contact_lists()
+        all_contacts = contacts.normalize('all')
+        api.save_contacts('All', all_contacts, cl_map['All']['id'])
+        logger.info(f'saved {len(all_contacts)} contacts to Unifi Talk')
     else:
         for label in labels:
             group_contacts = contacts.filter([label]).normalize(label)

@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import Self
 
 logger = logging.getLogger(__name__)
 
@@ -57,21 +58,23 @@ class Contacts:
         return len(self.contacts)
     
 
-    def filter(self, labels):
+    def filter(self, labels) -> Self:
         # Get the contacts with any label matching the given labels.
+        if len(labels) == 0:
+            return self
         lower_labels = [l.lower() for l in labels]
         return Contacts([c for c in self.contacts if any(l.lower() in lower_labels for l in c.labels)])
 
 
-    def normalize(self, label):
+    def normalize(self, label) -> Self:
         # Go through contacts finding those sharing a home number
         # For those, create a "surname home (first names)" contact
         # and remove the home number from the original contact.
-        self.contacts.extend(self.shared_home(self.contacts, label))
+        self.contacts.extend(self._shared_home(self.contacts, label))
         return self.contacts
 
 
-    def shared_home(self, contacts, label):
+    def _shared_home(self, contacts, label) -> [Contact]:
         # Gather contacts by home number.
         home_contacts = {}
         for c in contacts:

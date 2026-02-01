@@ -23,15 +23,17 @@ I kinda nerd-sniped myself with this project, initially I just wanted to see if 
 
 There's a hierarchy of commands to simplify adding network / protect at some point.  `talk` is the only top level command at the moment.
 
-All commands accept an optional flag:
+All commands accept optional flags:
 
+* `--favourite` to filter for only favourite (starred) contacts when getting from Google or syncing to Unifi Talk
+* `--label` to filter contacts to this label (or multiple labels if this argument is repeated), if no labels are specified, all contacts will be used
 * `--log-level` to control, obvs, log level (DEBUG, INFO, etc.)
 
 ## Unifi
 
 All unifi commands expect these flags:
 
-* `--server` is the endpoint of your Unifi controller
+* `--url` is the endpoint of your Unifi controller
 * `--username` is the name of the user to log in to the controller
 * `--password` is, well, duh, the password of the user
 
@@ -48,14 +50,16 @@ To run the CLI you'll first need to:
 
 `unifi talk` supports the following command structure:
 
-* get - to get contact info
-  * contacts - get contact info
-  * lists - get contact lists
-* sync - synchronize Google contacts with Unifi Talk; *deletes all existing Unifi Talk contacts!*
-  * takes multiple `--label`s - these correspond to labels in Google contacts.  Be careful of importing labels where one contact appears in both, de-duplication at that level is not handled.
-  * If the `--grandstream` argument is given, an XML file per label will be written ready for importing to Grandstream.  This isn't super-useful, we probably actually want a single XML file for all labels.
-  * If the `--unifi_csv` argument is given, a CSV file per label will be written ready for importing to Unifi Talk.
-  * If the `--unifi_talk` argument is given, the contacts will be directly uploaded to Unifi Talk and associated with a contact list of the same name as the label.
+* `get` to retrieve info
+  * `contacts` displays contact info
+  * `lists` displays contact lists
+* `sync` retrieves contacts from Google for output in various forms
+  * arguments are:
+    * `--concatenate` combines contacts from multiple labels into a single contact list whose name is specified with this argument
+    * `--grandstream` writes an XML file per label ready for importing to Grandstream phones.  This isn't super-useful as one upload will overwrite another; we probably actually want a single XML file for all labels.
+    * `--unifi_csv` writes a CSV file per label ready for importing to Unifi Talk.
+    * `--unifi_talk` directly uploads contacts to Unifi Talk, associated with a contact list of the same name as the label (one will be created if it doesn't already exist).  **Existing contacts and contact lists will be deleted.**
+    * `--label`s can also be specified; contacts are filtered by these labels. Be careful of importing labels where a contact appears in both, de-duplication at that level is not handled unless the labels are concatenated into a single contact list with `--concatenate`.
 
 For example:
 
@@ -103,5 +107,5 @@ $ hammer --favourite google get --raw
 ## TODO
 
 * Add automated upload to Grandstream phones
-* Allow download of all contacts regardless of label
 * Add network/protect integration with `unifi` command
+* Allow additive operations (e.g. don't delete contacts / contact lists from Unifi Talk)

@@ -12,8 +12,8 @@ Top level CLI command with options that may apply to every command.
 '''
 @click.group()
 @click.option('--favourite', is_flag=True, default=False, help='only use favourite (starred) contacts')
-@click.option('--loglevel', default='INFO', help='set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
 @click.option('--label', multiple=True, help='apply functions only to the given label(s)')
+@click.option('--loglevel', default='INFO', help='set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
 @click.pass_context
 def cli(ctx, favourite, loglevel, label):
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s %(message)s', datefmt='%H:%M:%S', level=getattr(logging, loglevel.upper(), None))

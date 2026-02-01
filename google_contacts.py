@@ -155,6 +155,8 @@ class GoogleContacts:
         if len(email_addresses) > 1 and email is None:
             email = email_addresses[0].get('value', '')
             logger.warning(f'{len(email_addresses)} email addresses for {first_name} {last_name}, specify one as "main", defaulting to first one alphabetically ({email})')
+        if email is None:
+            email = ''
         return email
 
 
