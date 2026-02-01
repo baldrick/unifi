@@ -52,10 +52,12 @@ To run the CLI you'll first need to:
   * `lists` displays contact lists
 * `sync` retrieves contacts from Google for output in various forms
   * arguments are:
-    * `--concatenate` combines contacts from multiple labels into a single contact list whose name is specified with this argument
-    * `--grandstream` writes an XML file per label ready for importing to Grandstream phones.  This isn't super-useful as one upload will overwrite another; we probably actually want a single XML file for all labels.
-    * `--unifi_csv` writes a CSV file per label ready for importing to Unifi Talk.
-    * `--unifi_talk` directly uploads contacts to Unifi Talk, associated with a contact list of the same name as the label (one will be created if it doesn't already exist).  **Existing contacts and contact lists will be deleted.**
+    * `--additive` when used with `--output unifi.talk` means existing Unifi Talk contacts and contact lists will not be deleted before new contacts are uploaded.
+    * `--concatenate` combines contacts from multiple labels into a single contact list whose name is specified with this argument.
+    * `--output [grandstream.xml | unifi.csv | unifi.talk`
+      * `grandstream.xml` means the command writes an XML file per label ready for importing to Grandstream phones.  This isn't super-useful as one upload will overwrite another; we probably actually want a single XML file for all labels.
+      * `unifi.csv` means the command writes a CSV file per label ready for importing to Unifi Talk.
+      * `unifi.talk` directly uploads contacts to Unifi Talk, associated with a contact list of the same name as the label (one will be created if it doesn't already exist).  **Existing contacts and contact lists will be deleted unless --additive is used.**
     * `--label`s can also be specified; contacts are filtered by these labels. Be careful of importing labels where a contact appears in both, de-duplication at that level is not handled unless the labels are concatenated into a single contact list with `--concatenate`.
 
 For example:
@@ -69,7 +71,7 @@ $ hammer unifi --url https://your.unifi --username you --password yourpwd talk g
 $ hammer unifi talk get lists
 # outputs raw contact lists from Unifi Talk
 
-$ hammer --label Family --label Friends unifi talk sync --grandstream --unifi_csv --unifi_talk
+$ hammer --label Family --label Friends unifi talk sync --output grandstream.xml --output unifi.csv --output unifi.talk
 # Gets contacts from Google labelled "Family" or "Friends".
 # Writes two files: Family.xml and Friends.xml for upload to Grandstream phones.
 # Writes two more files: Family.csv and Friends.csv for import into Unifi Talk.
@@ -77,7 +79,11 @@ $ hammer --label Family --label Friends unifi talk sync --grandstream --unifi_cs
 # replaces them with the ones downloaded from Google
 # and associates the downloaded contacts with the contact list of the same name.
 
-$ hammer --favourite --label Family unifi talk sync --unifi_talk
+$ hammer --label Coworkers unifi talk sync --additive --output unifi.talk
+# --additive means contacts and contact lists will not be deleted from Unifi Talk so
+# "Coworkers" would be uploaded without other contacts being lost.
+
+$ hammer --favourite --label Family unifi talk sync --output unifi.talk
 # Gets favourite (starred) "Family" contacts from Google and syncs them to Unifi Talk.
 ```
 

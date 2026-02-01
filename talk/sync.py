@@ -7,19 +7,19 @@ logger = logging.getLogger(__name__)
 # CSV header for import to Unifi Talk.
 HEADER = 'first_name,last_name,company,job_title,email,mobile_number,home_number,work_number,fax_number,other_number'
 
-def sync_contacts(ctx, additive, concatenate, grandstream, unifi_csv, unifi_talk):
+def sync_contacts(ctx, additive, concatenate, output):
     contacts = GoogleContacts(ctx).parsed_contacts
     if len(contacts) == 0:
         logger.warning('no contacts to sync, no action taken')
         return
 
-    if not (grandstream or unifi_csv or unifi_talk):
+    if len(output) == 0:
         logger.error('at least one output must be specified')
         return
 
-    if grandstream: write_grandstream_xml(ctx, concatenate, contacts)
-    if unifi_csv: write_unifi_csv(ctx, concatenate, contacts)
-    if unifi_talk: sync_unifi_talk(ctx, additive, concatenate, contacts)
+    if 'grandstream.xml' in output: write_grandstream_xml(ctx, concatenate, contacts)
+    if 'unifi.csv' in output: write_unifi_csv(ctx, concatenate, contacts)
+    if 'unifi.talk'in output: sync_unifi_talk(ctx, additive, concatenate, contacts)
 
 
 def write_grandstream_xml(ctx, concatenate, contacts):
