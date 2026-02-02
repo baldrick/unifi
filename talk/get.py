@@ -1,3 +1,4 @@
+import args
 import json
 import logging
 from talk.api import TalkAPI
@@ -12,8 +13,8 @@ def get_contacts(ctx):
     if contacts is None:
         logger.info('no contacts found')
         return
-    labels = ctx.obj['labels']
-    if len(labels) > 0:
+    labels = args.get(ctx, args.LABELS)
+    if labels is not None:
         cl_map = api.get_contact_lists()
         contacts = [c for c in contacts if intersects(cl_map, c.get('contact_lists'), labels)]
     logger.info(json.dumps(contacts, indent=2))

@@ -1,3 +1,4 @@
+import args
 import json
 import logging
 import requests
@@ -8,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 class TalkAPI:
     def __init__(self, ctx):
-        self.base_url = default(ctx, 'url')
-        self.username = default(ctx, 'username')
-        self.password = default(ctx, 'password')
+        self.base_url = default(ctx, args.UNIFI_URL)
+        self.username = default(ctx, args.UNIFI_USERNAME)
+        self.password = default(ctx, args.UNIFI_PASSWORD)
         self.session = None
         urllib3.disable_warnings()
 
@@ -185,4 +186,4 @@ class TalkAPI:
 
 def default(ctx, name):
     filename = f'.unifi/{name.lower()}'
-    return ctx.obj[name] or open(filename, 'r').readline().rstrip()
+    return args.get(ctx, name) or open(filename, 'r').readline().rstrip()

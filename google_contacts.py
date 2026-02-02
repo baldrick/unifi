@@ -1,3 +1,4 @@
+import args
 import base64
 import json
 import logging
@@ -14,20 +15,21 @@ logger = logging.getLogger(__name__)
 
 def get(ctx, raw, parsed):
     g = GoogleContacts(ctx)
-    labels = ctx.obj['labels']
+    labels = args.get(ctx, args.LABELS)
     if raw:
         output_raw = g.raw_contacts
         if labels is not None:
+            logger.debug(f'filtering using labels {labels}')
             output_raw = g.filter(labels)
-        logger.info(json.dumps(output_raw, default=lambda o: o.__dict__, sort_keys=True,indent=2))
-        logger.info(f'{len(output_raw)} raw filtered contacts found')
+        logger.debug(json.dumps(output_raw, default=lambda o: o.__dict__, sort_keys=True,indent=2))
+        logger.debug(f'{len(output_raw)} raw filtered contacts found')
     if parsed:
         output_parsed = g.parsed_contacts
         if labels is not None:
             output_parsed = g.parsed_contacts.filter(labels)
-        logger.info({json.dumps(output_parsed, default=lambda o: o.__dict__, sort_keys=True,indent=2)})
-        logger.info(f'{len(output_parsed)} parsed filtered contacts found')        
-    logger.info(f'{len(g.raw_contacts)} raw unfiltered contacts found, parsed to {len(g.parsed_contacts)}')
+        logger.debug({json.dumps(output_parsed, default=lambda o: o.__dict__, sort_keys=True,indent=2)})
+        logger.debug(f'{len(output_parsed)} parsed filtered contacts found')        
+    logger.debug(f'{len(g.raw_contacts)} raw unfiltered contacts found, parsed to {len(g.parsed_contacts)}')
 
 
 class GoogleContacts:
@@ -36,40 +38,22 @@ class GoogleContacts:
     TOKEN_FILE = '.google/token.json'
     CLIENT_SECRETS_FILE = '.google/credentials.json'
 
-    # Contacts who've died I put in this group ... if anyone else ends up using
-    # this code, they'll need a similar group if they don't simply delete the
-    # contact.  This is the group's ID, not its name.
-    PASSED='5815031b8d533454'
-
     def __init__(self, ctx):
+        self.groups = Groups()
+        logger.debug(f'contact groups: {json.dumps(self.groups.group_from_name, indent=2)}')
+
         self.raw_contacts = GoogleContacts.fetch()
-        if ctx.obj['favourite']:
-            logger.info(f'filtering {len(self.raw_contacts)} by favourites')
-            self.raw_contacts = self.filter(['starred'])
-            logger.info(f'found {len(self.raw_contacts)} favourites')
-        self.parsed_contacts = Contacts([p for c in self.raw_contacts if (p := GoogleContacts.parse(c)) is not None])
+        if args.get(ctx, args.FAVOURITE):
+            logger.debug(f'filtering {len(self.raw_contacts)} by favourites')
+            self.raw_contacts = self.filter([args.get(ctx, args.FAVOURITE_GROUP)])
+            logger.debug(f'found {len(self.raw_contacts)} favourites')
+        self.parsed_contacts = Contacts([p for c in self.raw_contacts if (p := self.parse(ctx, c)) is not None])
 
     def fetch():
-        creds = None
-        # The token file stores the user's access and refresh tokens.
-        if os.path.exists(GoogleContacts.TOKEN_FILE):
-            creds = Credentials.from_authorized_user_file(GoogleContacts.TOKEN_FILE, GoogleContacts.SCOPES)
-        
-        # If there are no (valid) credentials available, let the user log in.
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(GoogleContacts.CLIENT_SECRETS_FILE, GoogleContacts.SCOPES)
-                creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run.
-            with open(GoogleContacts.TOKEN_FILE, 'w') as token:
-                token.write(creds.to_json())
-
-        service = build('people', 'v1', credentials=creds)
+        g = Service()
 
         # Call the People API to list connections.
-        results = service.people().connections().list(
+        results = g.service.people().connections().list(
             resourceName='people/me',
             pageSize=1000,
             personFields='names,emailAddresses,phoneNumbers,memberships,photos,metadata'
@@ -79,23 +63,26 @@ class GoogleContacts:
 
 
     def filter(self, labels):
-        return [c for c in self.raw_contacts if GoogleContacts.is_member(c, labels)]
+        return [c for c in self.raw_contacts if self.is_member(c, labels)]
 
 
-    def is_member(person, labels):
+    def is_member(self, person, labels):
         memberships = person.get('memberships', [])
-        google_labels = {m.get('contactGroupMembership', {}).get('contactGroupResourceName').removeprefix('contactGroups/') for m in memberships}
-        # contacts = [c for c in self.contacts if any(l.lower() in lower_labels for l in c.labels)]
+        google_group_ids = {m.get('contactGroupMembership', {}).get('contactGroupResourceName') for m in memberships}
+        google_group_names = {name for name in self.groups.ids_to_group_names(google_group_ids)}
         lower_labels = {l.lower() for l in labels}
-        intersection = google_labels.intersection(lower_labels)
-        logger.debug(f'{lower_labels} intersection with google labels {google_labels} is {intersection}')
+        intersection = google_group_names.intersection(lower_labels)
         return len(intersection) > 0
 
-
-    def parse(person):
+    def parse(self, ctx, person):
         memberships = person.get('memberships', [])
-        labels = [m.get('contactGroupMembership', {}).get('contactGroupResourceName').removeprefix('contactGroups/') for m in memberships]
-        if GoogleContacts.PASSED in labels:
+        google_group_ids = [m.get('contactGroupMembership', {}).get('contactGroupResourceName') for m in memberships]
+        google_group_names = self.groups.ids_to_group_names(google_group_ids)
+        passed_group = args.get(ctx, args.PASSED_GROUP)
+        if passed_group is not None and passed_group.lower() in google_group_names:
+            return None
+        ignore_group = args.get(ctx, args.IGNORE_GROUP)
+        if ignore_group is not None and ignore_group.lower() in google_group_names:
             return None
 
         first_name, last_name = GoogleContacts.names(person)
@@ -108,6 +95,12 @@ class GoogleContacts:
             # This export is going to be used for phone contacts so if there are no numbers, skip.
             return None
 
+        labels = []
+        for id in google_group_ids:
+            fn = self.groups.formatted_name(id)
+            if fn is None:
+                continue
+            labels.append(fn)
         return Contact(
             labels,
             first_name,
@@ -177,3 +170,71 @@ class GoogleContacts:
                     avatar = base64.b64encode(binary_content).decode('utf-8')
                     break
         return avatar
+
+
+class Groups:
+    SCOPES = ['https://www.googleapis.com/auth/contacts.readonly']
+    TOKEN_FILE = '.google/token.json'
+    CLIENT_SECRETS_FILE = '.google/credentials.json'
+
+
+    def __init__(self):
+        g = Service()
+        self.raw_groups = g.service.contactGroups().list(pageSize=1000).execute()
+        self.group_from_id = {}
+        self.group_from_name = {}
+        for group in self.raw_groups.get('contactGroups', {}):
+            id = group.get('resourceName')
+            name = group.get('name')
+            if id is None or name is None:
+                continue
+            self.group_from_id[id] = group
+            self.group_from_name[name] = group
+
+
+    def ids_to_group_names(self, ids):
+        group_names = []
+        for id in ids:
+            group = self.group_from_id.get(id)
+            if group is None:
+                continue
+            group_names.append(group.get('name').lower())
+        return group_names
+
+
+    def id(self, name):
+        group = self.group_from_name.get(name)
+        if group is None:
+            return None
+        return group.get('id')
+    
+
+    def formatted_name(self, id):
+        group = self.group_from_id.get(id)
+        if group is None:
+            return None
+        return group.get('formattedName')
+
+
+class Service:
+    SCOPES = ['https://www.googleapis.com/auth/contacts.readonly']
+    TOKEN_FILE = '.google/token.json'
+    CLIENT_SECRETS_FILE = '.google/credentials.json'
+
+    def __init__(self):
+        creds = None
+        # The token file stores the user's access and refresh tokens.
+        if os.path.exists(Service.TOKEN_FILE):
+            creds = Credentials.from_authorized_user_file(Service.TOKEN_FILE, Service.SCOPES)
+        
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(Service.CLIENT_SECRETS_FILE, GoogleContacts.SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run.
+            with open(Service.TOKEN_FILE, 'w') as token:
+                token.write(creds.to_json())
+        self.service = build('people', 'v1', credentials=creds)

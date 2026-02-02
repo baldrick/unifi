@@ -1,3 +1,4 @@
+import args
 import logging
 from google_contacts import GoogleContacts
 from talk.api import TalkAPI
@@ -25,7 +26,7 @@ def sync_contacts(ctx, additive, concatenate, output):
 def write_grandstream_xml(ctx, concatenate, contacts):
     # Not sure if contacts really need to be normalized for Grandstream phones
     # but we may as well be consistent...
-    labels = ctx.obj['labels']
+    labels = args.get(ctx, args.LABELS)
     if concatenate is not None:
         contacts = contacts.filter(labels).normalize(concatenate)
         write_grandstream_xml_file(contacts, f'{concatenate}.xml')
@@ -48,14 +49,14 @@ def write_grandstream_xml_file(contacts, filename):
 
 
 def write_unifi_csv(ctx, concatenate, contacts):
-    labels = ctx.obj['labels']
+    labels = args.get(ctx, args.LABELS)
     if concatenate is not None:
-        contacts = contacts.filter(ctx.obj['labels']).normalize(concatenate)
+        contacts = contacts.filter(labels).normalize(concatenate)
         write_unifi_csv_file(contacts, f'{concatenate}.csv')
     elif len(labels) == 0:
         write_unifi_csv_file(contacts.normalize('all'), 'all.csv')
     else:
-        for label in ctx.obj['labels']:
+        for label in labels:
             write_unifi_csv_file(contacts.filter([label]).normalize(label), f'{label}.csv')
 
 
@@ -84,7 +85,7 @@ def sync_unifi_talk(ctx, additive, concatenate, contacts):
         else:
             logger.info('no contacts to delete from Unifi Talk')
     
-    labels = ctx.obj['labels']
+    labels = args.get(ctx, args.LABELS)
     concatenate_label = None
     if concatenate is not None:
         concatenate_label = [concatenate]

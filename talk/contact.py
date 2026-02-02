@@ -60,7 +60,7 @@ class Contacts:
 
     def filter(self, labels) -> Self:
         # Get the contacts with any label matching the given labels.
-        if len(labels) == 0:
+        if labels is None or len(labels) == 0:
             return self
         lower_labels = [l.lower() for l in labels]
         return Contacts([c for c in self.contacts if any(l.lower() in lower_labels for l in c.labels)])

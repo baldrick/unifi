@@ -1,3 +1,4 @@
+import args
 import click
 import logging
 import google_contacts
@@ -12,15 +13,21 @@ Top level CLI command with options that may apply to every command.
 '''
 @click.group()
 @click.option('--favourite', is_flag=True, default=False, help='only use favourite (starred) contacts')
+@click.option('--favourite_group', default='starred', help='use a non-standard group to represent favourite contacts')
+@click.option('--ignore_group', help='group to exclude from sync')
 @click.option('--label', multiple=True, help='apply functions only to the given label(s)')
 @click.option('--loglevel', default='INFO', help='set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
+@click.option('--passed_group', default='Passed', help='id of the group to exclude as the contact has passed')
 @click.pass_context
-def cli(ctx, favourite, label, loglevel):
+def cli(ctx, favourite, favourite_group, ignore_group, label, loglevel, passed_group):
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(name)s %(message)s', datefmt='%H:%M:%S', level=getattr(logging, loglevel.upper(), None))
     ctx.ensure_object(dict)
-    ctx.obj['favourite'] = favourite
-    ctx.obj['labels'] = label
-    ctx.obj['loglevel'] = loglevel.upper()
+    ctx.obj[args.FAVOURITE] = favourite
+    ctx.obj[args.FAVOURITE_GROUP] = favourite_group
+    ctx.obj[args.IGNORE_GROUP] = ignore_group
+    ctx.obj[args.LABELS] = label
+    ctx.obj[args.PASSED_GROUP] = passed_group
+
 
 '''
 unifi command group.
@@ -31,9 +38,10 @@ unifi command group.
 @click.option('--password', envvar='UNIFI_PASSWORD', help='Unifi password')
 @click.pass_context
 def unifi(ctx, url, username, password):
-    ctx.obj['url'] = url
-    ctx.obj['username'] = username
-    ctx.obj['password'] = password
+    ctx.obj[args.UNIFI_URL] = url
+    ctx.obj[args.UNIFI_USERNAME] = username
+    ctx.obj[args.UNIFI_PASSWORD] = password
+
 
 '''
 unifi talk command group.
@@ -43,6 +51,7 @@ unifi talk command group.
 def talk_cli(ctx):
     pass
 
+
 '''
 unifi talk get command group.
 '''
@@ -50,6 +59,7 @@ unifi talk get command group.
 @click.pass_context
 def get(ctx):
     pass
+
 
 '''
 unifi talk get contacts.
@@ -59,6 +69,7 @@ unifi talk get contacts.
 def contacts(ctx):
     talk.get.get_contacts(ctx)
 
+
 '''
 unifi talk get lists
 '''
@@ -66,6 +77,7 @@ unifi talk get lists
 @click.pass_context
 def lists(ctx):
     talk.get.get_contact_lists(ctx)
+
 
 '''
 unifi talk sync command
@@ -78,6 +90,7 @@ unifi talk sync command
 def sync(ctx, additive, concatenate, output):
     talk.sync.sync_contacts(ctx, additive, concatenate, output)
 
+
 '''
 google command group.
 '''
@@ -85,6 +98,7 @@ google command group.
 @click.pass_context
 def google(ctx):
     pass
+
 
 '''
 google get
@@ -95,6 +109,7 @@ google get
 @click.option('--parsed', is_flag=True, default=False, help='output parsed fetch results')
 def get(ctx, raw, parsed):
     google_contacts.get(ctx, raw, parsed)
+
 
 if __name__ == "__main__":
     cli(obj={})
