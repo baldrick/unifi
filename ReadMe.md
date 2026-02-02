@@ -22,7 +22,7 @@ All commands accept optional flags:
 
 * `--favourite` to filter for only favourite (starred) contacts when getting from Google or syncing to Unifi Talk
 * `--favourite_group` to use a non-standard group to represent favourite contacts
-* `--ignore_group` to specify a group to ignore; e.g. suppose you have hundreds of friends but don't want to sync all of them with Unifi Talk, add another label to their contact entry and specify that label here 
+* `--ignore_group` to specify a group to ignore; e.g. suppose you have hundreds of friends but don't want to sync all of them with Unifi Talk, add another label to the contacts not to sync and specify that label here (I used `NoSync`) 
 * `--label` to filter contacts to this label (or multiple labels if this argument is repeated), if no labels are specified, all contacts will be used
 * `--log-level` to control, obvs, log level (DEBUG, INFO, etc.)
 * `--passed_group` group to use to represent contacts who've passed (and therefore won't be included in the sync)

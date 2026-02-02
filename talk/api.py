@@ -146,7 +146,7 @@ class TalkAPI:
 
     def add_contact_lists_if_missing(self, labels):
         cl_map = self.get_contact_lists()
-        logger.info(f'cl_map: {cl_map}')
+        logger.debug(f'cl_map: {cl_map}')
         success = True
         for label in labels:
             if cl_map.get(label):
